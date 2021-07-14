@@ -1,0 +1,64 @@
+##1
+(exists (select 1 from workorder where (contains(description, '$pump') > 0) and (assetnum=asset.assetnum)))
+#OR#:
+assetnum in (select assetnum from workorder where description like '%pump%')
+
+
+##2
+exists(select 1 from persongroupteam where(resppartygroup = 'BASHAMF') and (persongroup = persongroup.persongroup))
+#OR#:
+persongroup in (select persongroup from persongroupteam where resppartygroup ='BASHAMF')
+
+
+##3
+personid in (select resppartygroup from persongroupteam where persongroup = 'PG4000' )
+personid in (select resppartygroup from persongroupteam where persongroup = 'PG4042' or persongroup = 'PG4027' )
+personid in (select resppartygroup from persongroupteam where persongroup in ('PG4027', 'PG4042'))
+
+
+##4 (assets with a meter)
+assetnum in (select assetnum from assetmeter where metername is not null)
+
+
+##5 (locations with assets)
+location in (select location from asset where assetnum is not null)
+
+
+##6 (locations with child locations starting with 'NA' and parents whos's parent is CFIXAIDS in CEN sector)
+location in (select parent from lochierarchy where location like 'NA%'  and parent in (select location from lochierarchy where children = 1 and parent in (select location from lochierarchy where parent like 'CFIX%'))) and ccg_region='CEN'
+
+~~~~
+location in (select location from locations where location in (select location from lochierarchy where parent in (select location from lochierarchy where parent like 'CFIX%')) and location not in (select location from asset where itemnum in ('NA101217', 'NA523752')))
+~~~~
+
+##7 (time based meter on asset)
+assetnum in (select assetnum from assetmeter where metername = 'TIME')
+
+
+##8 (assets with WO associated)
+assetnum in (select assetnum from workorder where wonum is not null)
+
+##9 (items added to inventory between dates)
+itemnum in (select itemnum from invtrans where transdate between to_date ('2020-04-01' , 'YYYY-MM-DD') and to_date ('2020-04-23' , 'YYYY-MM-DD'))
+
+
+##10 (new items inserted into storeroom between dates):
+itemnum in (select itemnum from invtrans where transdate between to_date ('2020-04-01' , 'YYYY-MM-DD') and to_date ('2020-04-23' , 'YYYY-MM-DD') and transtype='INSERTITEM') and location='CPRESSWH'
+itemnum in (select itemnum from invtrans where transdate between to_date ('2019-04-01' , 'YYYY-MM-DD') and to_date ('2020-03-31' , 'YYYY-MM-DD') and quantity>0) and location in (select location from locations where ccg_region in ('CEN', 'QUE'))
+
+
+##11 ()
+ponum in (select ponum from matrectrans where tostoreloc like 'C%')
+ponum in (select ponum from poline where storeloc like 'C%' and statusdate between to_date ('2019-04-01' , 'YYYY-MM-DD') and to_date ('2020-03-31' , 'YYYY-MM-DD')) and status='CLOSE'
+
+
+##12(users who inserted item into storeroom (People Application))
+(personid in (select enterby from invtrans where transtype='INSERTITEM' and storeloc in (select location from inventory where location='LSEINMAG'))) and ((status = 'ACTIVE'))
+
+
+##13
+location in (select location from locations where location in (select location from lochierarchy where parent in (select location from lochierarchy where parent='CFLTAIDS')))
+
+and 
+
+location not in (select location from locations where location in (select location from lochierarchy where parent in (select location from lochierarchy where parent='CFLTAIDS')) and location in (select location from asset where itemnum in ('NA513210','NA523753') and parent is null))
