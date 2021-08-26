@@ -62,3 +62,7 @@ location in (select location from locations where location in (select location f
 and 
 
 location not in (select location from locations where location in (select location from lochierarchy where parent in (select location from lochierarchy where parent='CFLTAIDS')) and location in (select location from asset where itemnum in ('NA513210','NA523753') and parent is null))
+
+
+##14
+location in (select location from asset group by location having count(assetnum)<2) order by location
